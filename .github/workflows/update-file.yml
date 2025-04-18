@@ -1,0 +1,30 @@
+name: Run updateFile.js daily
+
+on:
+  schedule:
+    - cron: '0 10 * * *'  # 9:00 PM UTC
+  workflow_dispatch:       # allows manual trigger too
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Run updateFile.js
+        run: node updateFile.js
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add data.txt
+          git commit -m "🕘 Auto-update data.txt @ $(date -u +'%Y-%m-%d %H:%M:%S')"
+          git push
