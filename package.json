@@ -1,0 +1,8 @@
+{
+  "name": "data-bridge",
+  "version": "1.0.0",
+  "main": "updateFile.js",
+  "scripts": {
+    "start": "node updateFile.js"
+  }
+}
