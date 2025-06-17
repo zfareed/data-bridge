@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        run_time: ${{ fromJSON('[' + needs.determine-runs.outputs.run_times + ']') }}
+        run_time: ${{ fromJSON(format('[{0}]', needs.determine-runs.outputs.run_times)) }}
 
     steps:
       - name: Checkout repo
