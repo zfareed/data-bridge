@@ -1,16 +1,50 @@
-name: Run updateFile.js daily
+name: Run updateFile.js dynamically
 
 on:
   schedule:
-    - cron: '0 16 * * *'  # 9:00 PM PKT (16:00 UTC)
-  workflow_dispatch:       # allows manual trigger too
+    - cron: '0 0 * * *'  # Run at midnight UTC to determine the day's schedule
+  workflow_dispatch:      # allows manual trigger too
 
 permissions:
   contents: write  # Grants write permissions for pushing changes
 
 jobs:
-  run-script:
+  determine-runs:
     runs-on: ubuntu-latest
+    outputs:
+      num_runs: ${{ steps.set-runs.outputs.num_runs }}
+      run_times: ${{ steps.set-runs.outputs.run_times }}
+
+    steps:
+      - name: Determine number of runs
+        id: set-runs
+        run: |
+          # Generate random number between 0 and 3
+          NUM_RUNS=$((RANDOM % 4))
+          echo "num_runs=$NUM_RUNS" >> $GITHUB_OUTPUT
+          
+          # Generate random hours between 9 and 17 (9 AM to 5 PM UTC)
+          if [ $NUM_RUNS -gt 0 ]; then
+            # Create array of possible hours
+            hours=($(seq 9 17))
+            # Shuffle and take first NUM_RUNS elements
+            selected_hours=($(printf "%s\n" "${hours[@]}" | shuf | head -n $NUM_RUNS))
+            # Sort the hours
+            selected_hours=($(printf "%s\n" "${selected_hours[@]}" | sort -n))
+            # Join with commas
+            RUN_TIMES=$(IFS=,; echo "${selected_hours[*]}")
+            echo "run_times=$RUN_TIMES" >> $GITHUB_OUTPUT
+          else
+            echo "run_times=" >> $GITHUB_OUTPUT
+          fi
+
+  run-script:
+    needs: determine-runs
+    if: ${{ needs.determine-runs.outputs.num_runs > 0 }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        run_time: ${{ fromJSON('[' + needs.determine-runs.outputs.run_times + ']') }}
 
     steps:
       - name: Checkout repo
